@@ -1,4 +1,5 @@
 const searchInput = document.querySelector(".search-input");
+const locationButton = document.querySelector(".location-button");
 const currentWeatherDiv = document.querySelector(".current-weather");
 const houlryWeatherDiv = document.querySelector(".hourly-weather .weather-list");
 
@@ -9,7 +10,7 @@ const weatherCodes = {
   clouds: [1003, 1006, 1009],
   mist: [1030, 1145, 1147],
   rain: [
-    1063, 1150, 1153.1168, 1171, 1181, 1183, 1198, 1201, 1240, 1243, 1246, 1273,
+    1063, 1150, 1153, 1168, 1171, 1181, 1183, 1198, 1201, 1240, 1243, 1246, 1273,
     1276,
   ],
   moderate_heavy_rain: [1186, 1189, 1195, 1243, 1246],
@@ -18,7 +19,7 @@ const weatherCodes = {
     1225, 1237, 1249, 1252, 1255, 1258, 1261, 1264.1279, 1282,
   ],
   thunder: [1087, 1279, 1282],
-  thunder_ran: [1273, 1276],
+  thunder_rain: [1273, 1276],
 };
 
 const displayHourlyForecast = (hourlyData) => {
@@ -47,9 +48,11 @@ const displayHourlyForecast = (hourlyData) => {
   console.log(hourlyWeatherHTML);
 };
 
-const getWeatherDetails = async (cityName) => {
-  const API_URL = `http://api.weatherapi.com/v1/forecast.json?key=${API_KEY}&q=${cityName}&days=2`;
 
+
+const getWeatherDetails = async (API_URL) => {
+  window.innerWidth <= 768 & searchInput.blur()
+  document.body.classList.remove(".show-no-results")
   try {
     // fetch data from api and parse the response as json
     const response = await fetch(API_URL);
@@ -75,16 +78,37 @@ const getWeatherDetails = async (cityName) => {
       ...data.forecast.forecastday[1].hour,
     ];
     displayHourlyForecast(combinedHourlyData);
+    searchInput.value = data.location.name
   } catch (error) {
-    console.log(error);
+    document.body.classList.add(".show-no-results")
   }
 };
+
+const setWeatherRequest = (cityName) =>{
+  const API_URL = `http://api.weatherapi.com/v1/forecast.json?key=${API_KEY}&q=${cityName}&days=2`;
+  getWeatherDetails(API_URL)
+}
 
 // Handle user input in the searchbox
 searchInput.addEventListener("keyup", (e) => {
   const cityName = searchInput.value.trim();
 
   if (e.key == "Enter" && cityName) {
-    getWeatherDetails(cityName);
+    setWeatherRequest(cityName);
   }
 });
+// get user's coordinates
+locationButton.addEventListener('click', ()=>{
+  navigator.geolocation.getCurrentPosition(position =>{
+    const {latitude,longitude} = position.coords;
+    const API_URL = `http://api.weatherapi.com/v1/forecast.json?key=${API_KEY}&q=${latitude},${longitude}&days=2`;
+
+    getWeatherDetails(API_URL);
+
+    console.log(position);
+  },error =>{
+    alert("location access denied")
+  })
+})
+
+setWeatherRequest("Dhaka");
